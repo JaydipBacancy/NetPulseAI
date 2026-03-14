@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getTestsPageData } from "@/lib/data/tests";
+import { requireAuthenticatedWorkspace } from "@/lib/supabase/rbac";
 import type {
   SortOrder,
   TestCaseSortBy,
@@ -113,6 +114,7 @@ async function loadTestsPageData(filters: TestsFilters) {
 }
 
 export default async function TestsPage({ searchParams }: TestsPageProps) {
+  const access = await requireAuthenticatedWorkspace();
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = parseFilters(resolvedSearchParams);
   const testsPageData = await loadTestsPageData(filters);
@@ -135,5 +137,10 @@ export default async function TestsPage({ searchParams }: TestsPageProps) {
     );
   }
 
-  return <TestRunnerPanel data={testsPageData} />;
+  return (
+    <TestRunnerPanel
+      canManageOperations={access.permissions.canManageOperations}
+      data={testsPageData}
+    />
+  );
 }

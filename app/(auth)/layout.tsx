@@ -11,5 +11,5 @@ type AuthLayoutProps = {
 export default async function AuthLayout({ children }: AuthLayoutProps) {
   await redirectAuthenticatedUser();
 
-  return <AppProviders>{children}</AppProviders>;
+  return <AppProviders className="dashboard-theme">{children}</AppProviders>;
 }

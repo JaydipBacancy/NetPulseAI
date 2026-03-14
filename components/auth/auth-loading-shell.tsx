@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function AuthLoadingShell() {
   return (
-    <main className="min-h-screen bg-background px-6 py-10 md:px-10">
+    <main className="dashboard-theme min-h-screen bg-background px-6 py-10 md:px-10">
       <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_28rem]">
         <section className="rounded-[2rem] border border-border/70 bg-card/80 p-8 shadow-[0_25px_80px_-48px_rgba(7,29,55,0.75)] backdrop-blur">
           <div className="flex gap-3">

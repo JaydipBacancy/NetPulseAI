@@ -1,12 +1,7 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  NodesFilters,
-  NodesInventoryData,
-  NodesSortBy,
-  SortOrder,
-} from "@/types/nodes";
+import type { NodesFilters, NodesInventoryData } from "@/types/nodes";
 import type { Database } from "@/types/supabase";
 
 type NodeRow = Pick<
@@ -29,7 +24,7 @@ const nodeStatusOrder: Database["public"]["Enums"]["node_status_enum"][] = [
   "degraded",
   "offline",
   "maintenance",
-];
+] as const;
 
 function unwrapQuery<T>(response: QueryResponse<T>, context: string): T {
   if (response.error || response.data === null) {
@@ -44,26 +39,16 @@ function roundValue(value: number, decimals: number) {
   return Math.round(value * precision) / precision;
 }
 
-function compareStrings(a: string, b: string, sortOrder: SortOrder) {
-  const result = a.localeCompare(b);
-  return sortOrder === "asc" ? result : -result;
-}
-
-function compareNumbers(a: number | null, b: number | null, sortOrder: SortOrder) {
-  if (a === null && b === null) {
-    return 0;
-  }
-
-  if (a === null) {
+function normalizePage(page: number, totalPages: number) {
+  if (page < 1) {
     return 1;
   }
 
-  if (b === null) {
-    return -1;
+  if (page > totalPages) {
+    return totalPages;
   }
 
-  const result = a - b;
-  return sortOrder === "asc" ? result : -result;
+  return page;
 }
 
 function getLatestMetricByNodeAndType(metrics: MetricRow[]) {
@@ -104,53 +89,6 @@ function getAvailableStatuses(nodes: NodeRow[]) {
   return nodeStatusOrder.filter((status) => statusSet.has(status));
 }
 
-function sortRows(
-  rows: NodesInventoryData["rows"],
-  sortBy: NodesSortBy,
-  sortOrder: SortOrder,
-) {
-  const sortedRows = [...rows];
-
-  sortedRows.sort((a, b) => {
-    switch (sortBy) {
-      case "name":
-        return compareStrings(a.name, b.name, sortOrder);
-      case "vendor":
-        return compareStrings(a.vendor, b.vendor, sortOrder);
-      case "status":
-        return compareStrings(a.status, b.status, sortOrder);
-      case "region":
-        return compareStrings(a.region, b.region, sortOrder);
-      case "network_slice":
-        return compareStrings(a.networkSlice, b.networkSlice, sortOrder);
-      case "latency_ms":
-        return compareNumbers(a.latencyMs, b.latencyMs, sortOrder);
-      case "throughput_mbps":
-        return compareNumbers(a.throughputMbps, b.throughputMbps, sortOrder);
-      case "packet_loss_pct":
-        return compareNumbers(a.packetLossPct, b.packetLossPct, sortOrder);
-      case "jitter_ms":
-        return compareNumbers(a.jitterMs, b.jitterMs, sortOrder);
-      default:
-        return 0;
-    }
-  });
-
-  return sortedRows;
-}
-
-function normalizePage(page: number, totalPages: number) {
-  if (page < 1) {
-    return 1;
-  }
-
-  if (page > totalPages) {
-    return totalPages;
-  }
-
-  return page;
-}
-
 export async function getNodesInventoryData(
   filters: NodesFilters,
 ): Promise<NodesInventoryData> {
@@ -158,7 +96,8 @@ export async function getNodesInventoryData(
   const [nodesResponse, metricsResponse] = await Promise.all([
     supabase
       .from("network_nodes")
-      .select("id,site_code,name,region,vendor,network_slice,status,availability_pct"),
+      .select("id,site_code,name,region,vendor,network_slice,status,availability_pct")
+      .order("name"),
     supabase
       .from("network_metrics")
       .select("node_id,metric_type,metric_value,recorded_at")
@@ -171,49 +110,47 @@ export async function getNodesInventoryData(
   const latestMetrics = getLatestMetricByNodeAndType(metrics);
   const normalizedQuery = filters.query?.trim().toLowerCase();
 
-  const allRows = nodes.map((node) => ({
-    availabilityPct: node.availability_pct,
-    id: node.id,
-    jitterMs: getMetricValue(latestMetrics, node.id, "jitter_ms", 1),
-    latencyMs: getMetricValue(latestMetrics, node.id, "latency_ms", 1),
-    name: node.name,
-    networkSlice: node.network_slice,
-    packetLossPct: getMetricValue(latestMetrics, node.id, "packet_loss_pct", 2),
-    region: node.region,
-    siteCode: node.site_code,
-    status: node.status,
-    throughputMbps: getMetricValue(latestMetrics, node.id, "throughput_mbps", 0),
-    vendor: node.vendor,
-  }));
+  const allRows = nodes
+    .map((node) => ({
+      availabilityPct: node.availability_pct,
+      id: node.id,
+      jitterMs: getMetricValue(latestMetrics, node.id, "jitter_ms", 1),
+      latencyMs: getMetricValue(latestMetrics, node.id, "latency_ms", 1),
+      name: node.name,
+      networkSlice: node.network_slice,
+      packetLossPct: getMetricValue(latestMetrics, node.id, "packet_loss_pct", 2),
+      region: node.region,
+      siteCode: node.site_code,
+      status: node.status,
+      throughputMbps: getMetricValue(latestMetrics, node.id, "throughput_mbps", 0),
+      vendor: node.vendor,
+    }))
+    .filter((row) => {
+      const matchesVendor = filters.vendor ? row.vendor === filters.vendor : true;
+      const matchesSlice = filters.networkSlice
+        ? row.networkSlice === filters.networkSlice
+        : true;
+      const matchesStatus = filters.status ? row.status === filters.status : true;
+      const matchesQuery = normalizedQuery
+        ? [
+            row.name,
+            row.networkSlice,
+            row.region,
+            row.siteCode,
+            row.vendor,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(normalizedQuery)
+        : true;
 
-  const filteredRows = allRows.filter((row) => {
-    const matchesVendor = filters.vendor ? row.vendor === filters.vendor : true;
-    const matchesSlice = filters.networkSlice
-      ? row.networkSlice === filters.networkSlice
-      : true;
-    const matchesStatus = filters.status ? row.status === filters.status : true;
-    const matchesQuery = normalizedQuery
-      ? [
-          row.name,
-          row.networkSlice,
-          row.region,
-          row.siteCode,
-          row.vendor,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery)
-      : true;
-
-    return matchesVendor && matchesSlice && matchesStatus && matchesQuery;
-  });
-
-  const sortedRows = sortRows(filteredRows, filters.sortBy, filters.sortOrder);
-  const totalItems = sortedRows.length;
+      return matchesVendor && matchesSlice && matchesStatus && matchesQuery;
+    });
+  const totalItems = allRows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / filters.pageSize));
   const page = normalizePage(filters.page, totalPages);
   const start = (page - 1) * filters.pageSize;
-  const rows = sortedRows.slice(start, start + filters.pageSize);
+  const rows = allRows.slice(start, start + filters.pageSize);
 
   return {
     filters: {
@@ -221,9 +158,9 @@ export async function getNodesInventoryData(
       page,
     },
     options: {
-      networkSlices: toUniqueSorted(allRows.map((row) => row.networkSlice)),
+      networkSlices: toUniqueSorted(nodes.map((node) => node.network_slice)),
       statuses: getAvailableStatuses(nodes),
-      vendors: toUniqueSorted(allRows.map((row) => row.vendor)),
+      vendors: toUniqueSorted(nodes.map((node) => node.vendor)),
     },
     pagination: {
       page,

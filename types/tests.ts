@@ -10,7 +10,9 @@ type BaseRunTestFormState<FieldName extends string> = {
 };
 
 export type RunTestFieldName = "nodeId" | "testCaseId";
-export type RunTestFormState = BaseRunTestFormState<RunTestFieldName>;
+export type RunTestFormState = BaseRunTestFormState<RunTestFieldName> & {
+  resultStatus?: Database["public"]["Enums"]["test_result_status_enum"];
+};
 export type SortOrder = "asc" | "desc";
 export type TestCaseSortBy = "category" | "created_at" | "name" | "pass_threshold";
 export type TestHistorySortBy = "executed_at" | "node_name" | "status" | "test_name";

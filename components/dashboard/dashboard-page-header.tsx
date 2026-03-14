@@ -8,6 +8,7 @@ import {
   FileText,
   RadioTower,
   ServerCog,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,12 @@ const headerMetaByRoute: Record<string, HeaderMeta> = {
     tags: ["Predefined cases", "Execution history", "Auditable results"],
     title: "Test Runner",
   },
+  "/users": {
+    description: "Manage workspace roles, activation status, and user access governance.",
+    icon: Users,
+    tags: ["Role governance", "Admin controls", "Workspace access"],
+    title: "User Management",
+  },
 };
 
 function getHeaderMeta(pathname: string): HeaderMeta {
@@ -74,9 +81,9 @@ export function DashboardPageHeader() {
   const Icon = meta.icon;
 
   return (
-    <Card className="relative overflow-hidden border-[#0d2330]/10 bg-gradient-to-r from-card via-card to-primary/8 shadow-[0_22px_70px_-58px_rgba(8,23,34,0.85)]">
+    <Card className="relative overflow-hidden border-border/70 bg-gradient-to-r from-card via-card to-accent/35 shadow-[0_22px_70px_-58px_rgba(15,23,42,0.16)]">
       <div className="pointer-events-none absolute -right-12 top-0 h-32 w-56 rounded-full bg-primary/12 blur-3xl" />
-      <div className="pointer-events-none absolute -left-10 bottom-[-3rem] h-36 w-52 rounded-full bg-[#c94f3d]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-[-3rem] h-36 w-52 rounded-full bg-accent/40 blur-3xl" />
       <CardContent className="relative space-y-4 p-5 sm:p-6">
         <div className="space-y-4">
           <div className="flex items-start gap-3">

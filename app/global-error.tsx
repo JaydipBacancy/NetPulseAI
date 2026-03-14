@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
 type GlobalErrorProps = {
   error: Error & { digest?: string };
   reset: () => void;
@@ -24,12 +22,19 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => reset()} type="button">
+            <button
+              className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              onClick={() => reset()}
+              type="button"
+            >
               Try again
-            </Button>
-            <Button asChild variant="outline">
-              <a href="/dashboard">Open dashboard</a>
-            </Button>
+            </button>
+            <a
+              className="inline-flex h-10 items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              href="/dashboard"
+            >
+              Open dashboard
+            </a>
           </div>
 
           {error.digest ? (

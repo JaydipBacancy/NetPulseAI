@@ -279,10 +279,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_profiles: {
+        Row: {
+          created_at: string;
+          email: string;
+          full_name: string;
+          id: string;
+          is_active: boolean;
+          role: Database["public"]["Enums"]["app_role_enum"];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          full_name: string;
+          id: string;
+          is_active?: boolean;
+          role?: Database["public"]["Enums"]["app_role_enum"];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          full_name?: string;
+          id?: string;
+          is_active?: boolean;
+          role?: Database["public"]["Enums"]["app_role_enum"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
+      app_role_enum: "admin" | "operator" | "viewer";
       alert_severity_enum: "critical" | "warning" | "info";
       alert_status_enum: "open" | "resolved";
       metric_type_enum:

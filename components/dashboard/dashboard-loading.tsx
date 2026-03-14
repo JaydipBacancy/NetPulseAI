@@ -91,57 +91,57 @@ function SectionCard({
 
 export function DashboardShellLoading() {
   return (
-    <main className="min-h-screen bg-background px-3 py-3 sm:px-4 md:px-5 md:py-4">
+    <main className="dashboard-theme min-h-screen bg-background px-3 py-3 sm:px-4 md:px-5 md:py-4">
       <div className="mx-auto grid w-full max-w-[1680px] gap-4 lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:gap-5">
         <aside className="hidden lg:block">
-          <Card className="h-[calc(100vh-2rem)] overflow-hidden border-[#0d2330]/8 bg-[#081722] text-white">
+          <Card className="h-[calc(100vh-2rem)] overflow-hidden border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(244,248,252,0.98))] text-foreground">
             <CardContent className="flex h-full flex-col gap-5 p-4">
-              <div className="border-b border-white/8 pb-4">
+              <div className="border-b border-border/70 pb-4">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="size-11 rounded-[1.25rem] bg-white/12" />
+                  <Skeleton className="size-11 rounded-[1.25rem] bg-foreground/[0.08]" />
                   <div className="space-y-2">
-                    <Skeleton className="h-3 w-20 bg-white/12" />
-                    <Skeleton className="h-5 w-36 bg-white/12" />
+                    <Skeleton className="h-3 w-20 bg-foreground/[0.08]" />
+                    <Skeleton className="h-5 w-36 bg-foreground/[0.08]" />
                   </div>
                 </div>
               </div>
               <div className="flex-1 space-y-3">
-                <Skeleton className="h-3 w-20 bg-white/10" />
+                <Skeleton className="h-3 w-20 bg-foreground/[0.08]" />
                 {Array.from({ length: 6 }, (_, index) => (
-                  <Skeleton className="h-12 w-full bg-white/10" key={`nav-${index}`} />
+                  <Skeleton className="h-12 w-full bg-foreground/[0.08]" key={`nav-${index}`} />
                 ))}
               </div>
-              <div className="space-y-3 border-t border-white/8 pt-4">
-                <Skeleton className="h-14 w-full bg-white/10" />
-                <Skeleton className="h-10 w-full rounded-full bg-white/10" />
+              <div className="space-y-3 border-t border-border/70 pt-4">
+                <Skeleton className="h-14 w-full bg-foreground/[0.08]" />
+                <Skeleton className="h-10 w-full rounded-full bg-foreground/[0.08]" />
               </div>
             </CardContent>
           </Card>
         </aside>
 
         <div className="space-y-4">
-          <Card className="overflow-hidden border-[#0d2330]/10 bg-[#081722] text-white lg:hidden">
+          <Card className="overflow-hidden border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(244,248,252,0.98))] text-foreground lg:hidden">
             <CardContent className="space-y-4 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="size-10 rounded-2xl bg-white/10" />
+                  <Skeleton className="size-10 rounded-2xl bg-foreground/[0.08]" />
                   <div className="space-y-2">
-                    <Skeleton className="h-3 w-20 bg-white/10" />
-                    <Skeleton className="h-5 w-32 bg-white/10" />
+                    <Skeleton className="h-3 w-20 bg-foreground/[0.08]" />
+                    <Skeleton className="h-5 w-32 bg-foreground/[0.08]" />
                   </div>
                 </div>
-                <Skeleton className="h-9 w-24 rounded-full bg-white/10" />
+                <Skeleton className="h-9 w-24 rounded-full bg-foreground/[0.08]" />
               </div>
-              <Skeleton className="h-14 w-full bg-white/10" />
+              <Skeleton className="h-14 w-full bg-foreground/[0.08]" />
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {Array.from({ length: 6 }, (_, index) => (
-                  <Skeleton className="h-10 w-full bg-white/10" key={`mobile-nav-${index}`} />
+                  <Skeleton className="h-10 w-full bg-foreground/[0.08]" key={`mobile-nav-${index}`} />
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden border-[#0d2330]/10 bg-gradient-to-r from-card via-card to-primary/8">
+          <Card className="overflow-hidden border-border/70 bg-gradient-to-r from-card via-card to-accent/35">
             <CardContent className="space-y-4 p-5 sm:p-6">
               <div className="flex items-start gap-3">
                 <Skeleton className="size-11 rounded-2xl" />

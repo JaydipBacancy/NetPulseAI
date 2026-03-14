@@ -19,23 +19,25 @@ async function loadDashboardOverview() {
 export default async function DashboardPage() {
   const dashboardData = await loadDashboardOverview();
 
-  if (!dashboardData) {
-    return (
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle>Dashboard data unavailable</CardTitle>
-          <CardDescription>
-            We could not load the latest monitoring snapshot right now.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Verify your Supabase connection and refresh the page.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return <DashboardOverview data={dashboardData} />;
+  return (
+    <div className="space-y-4">
+      {dashboardData ? (
+        <DashboardOverview data={dashboardData} />
+      ) : (
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle>Dashboard data unavailable</CardTitle>
+            <CardDescription>
+              We could not load the latest monitoring snapshot right now.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Verify your Supabase connection and refresh the page.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }

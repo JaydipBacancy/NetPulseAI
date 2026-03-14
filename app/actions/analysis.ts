@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  assertOperationsAccess,
+  getAccessControlMessage,
+} from "@/lib/supabase/rbac";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AnalyzeNetworkState } from "@/types/analysis";
 import type { Database } from "@/types/supabase";
@@ -187,6 +191,7 @@ export async function analyzeNetworkAction(
   const generatedAt = createActionTimestamp();
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const [nodesResponse, alertsResponse, failedTestsResponse] = await Promise.all([
       supabase.from("network_nodes").select("id,name,network_slice,status"),
@@ -290,9 +295,12 @@ export async function analyzeNetworkAction(
       status: "success",
       submittedAt: generatedAt,
     };
-  } catch {
+  } catch (error) {
     return {
-      message: "Something went wrong while generating analysis.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while generating analysis.",
+      ),
       status: "server_error",
       submittedAt: generatedAt,
     };

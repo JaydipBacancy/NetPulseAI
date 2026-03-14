@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAlertsFeedData } from "@/lib/data/alerts";
+import { requireAuthenticatedWorkspace } from "@/lib/supabase/rbac";
 import type {
   AlertMetricType,
   AlertSeverity,
@@ -98,6 +99,7 @@ async function loadAlertsFeed(filters: AlertsFilters) {
 }
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
+  const access = await requireAuthenticatedWorkspace();
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = parseFilters(resolvedSearchParams);
   const alertsFeed = await loadAlertsFeed(filters);
@@ -120,5 +122,10 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
     );
   }
 
-  return <AlertsFeed data={alertsFeed} />;
+  return (
+    <AlertsFeed
+      canManageOperations={access.permissions.canManageOperations}
+      data={alertsFeed}
+    />
+  );
 }

@@ -1,25 +1,12 @@
 import type { Database } from "@/types/supabase";
 
 export type NodeStatus = Database["public"]["Enums"]["node_status_enum"];
-export type SortOrder = "asc" | "desc";
-export type NodesSortBy =
-  | "jitter_ms"
-  | "latency_ms"
-  | "name"
-  | "network_slice"
-  | "packet_loss_pct"
-  | "region"
-  | "status"
-  | "throughput_mbps"
-  | "vendor";
 
 export type NodesFilters = {
+  networkSlice?: string;
   page: number;
   pageSize: number;
   query?: string;
-  networkSlice?: string;
-  sortBy: NodesSortBy;
-  sortOrder: SortOrder;
   status?: NodeStatus;
   vendor?: string;
 };
@@ -37,19 +24,6 @@ export type NodeInventoryRow = {
   status: NodeStatus;
   throughputMbps: number | null;
   vendor: string;
-};
-
-export type NodeFilterOptions = {
-  networkSlices: string[];
-  statuses: NodeStatus[];
-  vendors: string[];
-};
-
-export type NodesPagination = {
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
 };
 
 type BaseNodeFormState<FieldName extends string> = {
@@ -72,6 +46,19 @@ export type CreateNodeFieldName =
   | "vendor";
 
 export type CreateNodeFormState = BaseNodeFormState<CreateNodeFieldName>;
+
+export type NodeFilterOptions = {
+  networkSlices: string[];
+  statuses: NodeStatus[];
+  vendors: string[];
+};
+
+export type NodesPagination = {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
 
 export type NodesInventoryData = {
   filters: NodesFilters;

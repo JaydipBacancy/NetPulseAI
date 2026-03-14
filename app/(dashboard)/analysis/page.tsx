@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAnalysisPageData } from "@/lib/data/analysis";
+import { requireAuthenticatedWorkspace } from "@/lib/supabase/rbac";
 import type { AnalysisFilters, AnalysisSortBy, SortOrder } from "@/types/analysis";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -73,6 +74,7 @@ async function loadAnalysisPageData(filters: AnalysisFilters) {
 }
 
 export default async function AnalysisPage({ searchParams }: AnalysisPageProps) {
+  const access = await requireAuthenticatedWorkspace();
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = parseFilters(resolvedSearchParams);
   const analysisPageData = await loadAnalysisPageData(filters);
@@ -95,5 +97,10 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
     );
   }
 
-  return <AnalysisConsole data={analysisPageData} />;
+  return (
+    <AnalysisConsole
+      canManageOperations={access.permissions.canManageOperations}
+      data={analysisPageData}
+    />
+  );
 }

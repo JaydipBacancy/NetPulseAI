@@ -7,12 +7,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getNodesInventoryData } from "@/lib/data/nodes";
-import type {
-  NodeStatus,
-  NodesFilters,
-  NodesSortBy,
-  SortOrder,
-} from "@/types/nodes";
+import { requireAuthenticatedWorkspace } from "@/lib/supabase/rbac";
+import type { NodeStatus, NodesFilters } from "@/types/nodes";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -20,19 +16,12 @@ type NodesPageProps = {
   searchParams?: Promise<SearchParams> | SearchParams;
 };
 
-const nodeStatuses: NodeStatus[] = ["online", "degraded", "offline", "maintenance"];
-const nodeSortByOptions: NodesSortBy[] = [
-  "name",
-  "vendor",
-  "status",
-  "region",
-  "network_slice",
-  "latency_ms",
-  "throughput_mbps",
-  "packet_loss_pct",
-  "jitter_ms",
+const nodeStatuses: NodeStatus[] = [
+  "online",
+  "degraded",
+  "offline",
+  "maintenance",
 ];
-const sortOrders: SortOrder[] = ["asc", "desc"];
 
 function getSingleParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) {
@@ -47,37 +36,28 @@ function parsePositiveInteger(value: string | undefined, fallback: number) {
     return fallback;
   }
 
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  const parsedValue = Number.parseInt(value, 10);
+
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
 }
 
 function parseFilters(params: SearchParams): NodesFilters {
   const query = getSingleParam(params.q);
-  const vendor = getSingleParam(params.vendor);
-  const networkSlice = getSingleParam(params.slice);
-  const statusValue = getSingleParam(params.status);
-  const sortByValue = getSingleParam(params.sort);
-  const sortOrderValue = getSingleParam(params.order);
-  const pageValue = getSingleParam(params.page);
-  const status = nodeStatuses.includes(statusValue as NodeStatus)
-    ? (statusValue as NodeStatus)
+  const vendor = getSingleParam(params.vendor)?.trim();
+  const networkSlice = getSingleParam(params.slice)?.trim();
+  const rawStatus = getSingleParam(params.status);
+  const status = nodeStatuses.includes(rawStatus as NodeStatus)
+    ? (rawStatus as NodeStatus)
     : undefined;
-  const sortBy = nodeSortByOptions.includes(sortByValue as NodesSortBy)
-    ? (sortByValue as NodesSortBy)
-    : "name";
-  const sortOrder = sortOrders.includes(sortOrderValue as SortOrder)
-    ? (sortOrderValue as SortOrder)
-    : "asc";
+  const page = parsePositiveInteger(getSingleParam(params.page), 1);
 
   return {
-    networkSlice: networkSlice?.trim() || undefined,
-    page: parsePositiveInteger(pageValue, 1),
+    networkSlice: networkSlice || undefined,
+    page,
     pageSize: 10,
     query: query?.trim() || undefined,
-    sortBy,
-    sortOrder,
     status,
-    vendor: vendor?.trim() || undefined,
+    vendor: vendor || undefined,
   };
 }
 
@@ -90,6 +70,7 @@ async function loadNodesInventory(filters: NodesFilters) {
 }
 
 export default async function NodesPage({ searchParams }: NodesPageProps) {
+  const access = await requireAuthenticatedWorkspace();
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = parseFilters(resolvedSearchParams);
   const nodesInventory = await loadNodesInventory(filters);
@@ -112,5 +93,10 @@ export default async function NodesPage({ searchParams }: NodesPageProps) {
     );
   }
 
-  return <NodeInventoryTable data={nodesInventory} />;
+  return (
+    <NodeInventoryTable
+      canManageOperations={access.permissions.canManageOperations}
+      data={nodesInventory}
+    />
+  );
 }

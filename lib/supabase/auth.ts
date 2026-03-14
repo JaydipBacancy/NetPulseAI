@@ -1,31 +1,27 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentWorkspaceAccess } from "@/lib/supabase/rbac";
 
 export async function getCurrentUser() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return user;
+  const access = await getCurrentWorkspaceAccess();
+  return access.user;
 }
 
 export async function redirectAuthenticatedUser() {
-  const user = await getCurrentUser();
+  const access = await getCurrentWorkspaceAccess();
 
-  if (user) {
+  if (access.profile?.isActive) {
     redirect("/dashboard");
   }
 }
 
 export async function requireAuthenticatedUser() {
-  const user = await getCurrentUser();
+  const access = await getCurrentWorkspaceAccess();
 
-  if (!user) {
+  if (!access.user || !access.profile || !access.profile.isActive) {
     redirect("/signin");
   }
 
-  return user;
+  return access.user;
 }

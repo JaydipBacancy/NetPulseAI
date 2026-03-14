@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import type { MutationActionState } from "@/lib/action-state";
 import { getFormValues } from "@/lib/form-values";
+import {
+  assertOperationsAccess,
+  getAccessControlMessage,
+} from "@/lib/supabase/rbac";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   deleteAnalysisReportSchema,
@@ -39,6 +43,7 @@ export async function updateAnalysisReportRiskAction(
   }
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase
       .from("analysis_reports")
@@ -64,9 +69,12 @@ export async function updateAnalysisReportRiskAction(
       submittedAt: actionTimestamp,
       values: {},
     } satisfies MutationActionState;
-  } catch {
+  } catch (error) {
     return {
-      message: "Something went wrong while updating the report.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while updating the report.",
+      ),
       status: "server_error",
       submittedAt: actionTimestamp,
       values,
@@ -92,6 +100,7 @@ export async function deleteAnalysisReportAction(
   }
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase
       .from("analysis_reports")
@@ -113,9 +122,12 @@ export async function deleteAnalysisReportAction(
       status: "success",
       submittedAt: actionTimestamp,
     } satisfies MutationActionState;
-  } catch {
+  } catch (error) {
     return {
-      message: "Something went wrong while deleting the report.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while deleting the report.",
+      ),
       status: "server_error",
       submittedAt: actionTimestamp,
     } satisfies MutationActionState;

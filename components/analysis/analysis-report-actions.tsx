@@ -12,7 +12,7 @@ import { useMutationActionToast } from "@/hooks/use-mutation-action-toast";
 import type { Database } from "@/types/supabase";
 
 const inlineControlClassName =
-  "h-9 rounded-xl border border-input bg-background/90 px-2 py-1 text-xs text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
+  "h-9 rounded-xl border border-border/70 bg-card/92 px-2 py-1 text-xs text-foreground shadow-[0_10px_24px_-20px_rgba(15,23,42,0.16)] transition-colors [color-scheme:light] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
 
 type AnalysisReportActionsProps = {
   reportId: string;

@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -132,28 +133,88 @@ function formatUtcTimestamp(value: string) {
 }
 
 function SearchForm({ filters }: { filters: AlertsFilters }) {
+  const clearHref = buildAlertsHref(filters, {
+    page: 1,
+    query: undefined,
+  });
+
   return (
-    <form action="/alerts" className="flex flex-wrap items-center gap-2">
-      <Input defaultValue={filters.query ?? ""} name="q" placeholder="Search title, summary, node" />
+    <form
+      action="/alerts"
+      className="flex w-full max-w-3xl flex-col gap-2 sm:flex-row sm:items-center"
+    >
+      <Input
+        className="min-w-0 sm:flex-1"
+        defaultValue={filters.query ?? ""}
+        name="q"
+        placeholder="Search alert title, summary, or node"
+      />
       <input name="status" type="hidden" value={filters.status} />
       <input name="sort" type="hidden" value={filters.sortBy} />
       <input name="order" type="hidden" value={filters.sortOrder} />
       {filters.severity ? <input name="severity" type="hidden" value={filters.severity} /> : null}
       {filters.metricType ? <input name="metric" type="hidden" value={filters.metricType} /> : null}
-      <Button size="sm" type="submit">
+      <Button className="w-full shrink-0 sm:w-auto" type="submit">
         Search
       </Button>
+      {filters.query ? (
+        <Button asChild className="w-full shrink-0 sm:w-auto" variant="outline">
+          <Link href={clearHref}>Clear</Link>
+        </Button>
+      ) : null}
     </form>
   );
 }
 
-export function AlertsFeed({ data }: { data: AlertsFeedData }) {
+export function AlertsFeed({
+  canManageOperations,
+  data,
+}: {
+  canManageOperations: boolean;
+  data: AlertsFeedData;
+}) {
   const previousPageHref = buildAlertsHref(data.filters, {
     page: Math.max(1, data.filters.page - 1),
   });
   const nextPageHref = buildAlertsHref(data.filters, {
     page: Math.min(data.pagination.totalPages, data.filters.page + 1),
   });
+  const statusOptions = [
+    {
+      href: buildAlertsHref(data.filters, { page: 1, status: "open" }),
+      label: `Open (${data.countsByStatus.open})`,
+      value: "open",
+    },
+    {
+      href: buildAlertsHref(data.filters, { page: 1, status: "resolved" }),
+      label: `Resolved (${data.countsByStatus.resolved})`,
+      value: "resolved",
+    },
+  ];
+  const severityOptionsList = [
+    {
+      href: buildAlertsHref(data.filters, { page: 1, severity: undefined }),
+      label: "All severity",
+      value: "all",
+    },
+    ...severityOptions.map((severity) => ({
+      href: buildAlertsHref(data.filters, { page: 1, severity }),
+      label: severity.toUpperCase(),
+      value: severity,
+    })),
+  ];
+  const metricOptions = [
+    {
+      href: buildAlertsHref(data.filters, { metricType: undefined, page: 1 }),
+      label: "All metrics",
+      value: "all",
+    },
+    ...data.options.metricTypes.map((metricType) => ({
+      href: buildAlertsHref(data.filters, { metricType, page: 1 }),
+      label: formatMetricType(metricType),
+      value: metricType,
+    })),
+  ];
 
   return (
     <Card className="border-border/70 bg-card/90">
@@ -162,84 +223,42 @@ export function AlertsFeed({ data }: { data: AlertsFeedData }) {
           <div>
             <CardTitle>Alert Center</CardTitle>
             <CardDescription className="mt-1">
-              CRUD-ready alert feed with filtering, sorting, and pagination.
+              {canManageOperations
+                ? "CRUD-ready alert feed with filtering, sorting, and pagination."
+                : "Read-only alert feed with filtering, sorting, and pagination."}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <CreateAlertForm nodes={data.options.nodes} />
+        {canManageOperations ? (
+          <CreateAlertForm nodes={data.options.nodes} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Viewer access is read-only. Only operators and admins can create or
+            resolve alerts.
+          </p>
+        )}
 
         <SearchForm filters={data.filters} />
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            asChild
-            size="sm"
-            variant={data.filters.status === "open" ? "default" : "outline"}
-          >
-            <Link href={buildAlertsHref(data.filters, { page: 1, status: "open" })}>
-              Open ({data.countsByStatus.open})
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant={data.filters.status === "resolved" ? "default" : "outline"}
-          >
-            <Link href={buildAlertsHref(data.filters, { page: 1, status: "resolved" })}>
-              Resolved ({data.countsByStatus.resolved})
-            </Link>
-          </Button>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            asChild
-            size="sm"
-            variant={!data.filters.severity ? "default" : "outline"}
-          >
-            <Link href={buildAlertsHref(data.filters, { page: 1, severity: undefined })}>
-              All severity
-            </Link>
-          </Button>
-          {severityOptions.map((severity) => (
-            <Button
-              asChild
-              key={severity}
-              size="sm"
-              variant={data.filters.severity === severity ? "default" : "outline"}
-            >
-              <Link href={buildAlertsHref(data.filters, { page: 1, severity })}>
-                {severity.toUpperCase()}
-              </Link>
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            asChild
-            size="sm"
-            variant={!data.filters.metricType ? "default" : "outline"}
-          >
-            <Link href={buildAlertsHref(data.filters, { metricType: undefined, page: 1 })}>
-              All metrics
-            </Link>
-          </Button>
-          {data.options.metricTypes.map((metricType) => (
-            <Button
-              asChild
-              key={metricType}
-              size="sm"
-              variant={data.filters.metricType === metricType ? "default" : "outline"}
-            >
-              <Link href={buildAlertsHref(data.filters, { metricType, page: 1 })}>
-                {formatMetricType(metricType)}
-              </Link>
-            </Button>
-          ))}
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <FilterDropdown
+            label="Status"
+            options={statusOptions}
+            selectedValue={data.filters.status}
+          />
+          <FilterDropdown
+            label="Severity"
+            options={severityOptionsList}
+            selectedValue={data.filters.severity ?? "all"}
+          />
+          <FilterDropdown
+            label="Metric"
+            options={metricOptions}
+            selectedValue={data.filters.metricType ?? "all"}
+          />
         </div>
 
         <Table>
@@ -281,7 +300,7 @@ export function AlertsFeed({ data }: { data: AlertsFeedData }) {
                   {renderSortLabel(data.filters, "created_at", "Created Time")}
                 </Link>
               </TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{canManageOperations ? "Actions" : "Access"}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -319,7 +338,11 @@ export function AlertsFeed({ data }: { data: AlertsFeedData }) {
                   </TableCell>
                   <TableCell>{formatUtcTimestamp(alert.createdAt)}</TableCell>
                   <TableCell>
-                    <AlertRowActions alertId={alert.id} status={alert.status} />
+                    {canManageOperations ? (
+                      <AlertRowActions alertId={alert.id} status={alert.status} />
+                    ) : (
+                      <Badge variant="outline">Read only</Badge>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import type { MutationActionState } from "@/lib/action-state";
 import { getFormValues } from "@/lib/form-values";
+import {
+  assertOperationsAccess,
+  getAccessControlMessage,
+} from "@/lib/supabase/rbac";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   createNodeSchema,
@@ -54,6 +58,7 @@ export async function createNodeAction(
   }
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.from("network_nodes").insert({
       availability_pct: result.data.availabilityPct,
@@ -86,10 +91,13 @@ export async function createNodeAction(
       submittedAt: createActionTimestamp(),
       values: {},
     };
-  } catch {
+  } catch (error) {
     return {
       fieldErrors: {},
-      message: "Something went wrong while creating the node.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while creating the node.",
+      ),
       status: "server_error",
       submittedAt: createActionTimestamp(),
       values,
@@ -115,6 +123,7 @@ export async function updateNodeAction(
   }
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase
       .from("network_nodes")
@@ -141,9 +150,12 @@ export async function updateNodeAction(
       submittedAt: actionTimestamp,
       values: {},
     } satisfies MutationActionState;
-  } catch {
+  } catch (error) {
     return {
-      message: "Something went wrong while updating the node.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while updating the node.",
+      ),
       status: "server_error",
       submittedAt: actionTimestamp,
       values,
@@ -169,6 +181,7 @@ export async function deleteNodeAction(
   }
 
   try {
+    await assertOperationsAccess();
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase
       .from("network_nodes")
@@ -190,9 +203,12 @@ export async function deleteNodeAction(
       status: "success",
       submittedAt: actionTimestamp,
     } satisfies MutationActionState;
-  } catch {
+  } catch (error) {
     return {
-      message: "Something went wrong while deleting the node.",
+      message: getAccessControlMessage(
+        error,
+        "Something went wrong while deleting the node.",
+      ),
       status: "server_error",
       submittedAt: actionTimestamp,
     } satisfies MutationActionState;

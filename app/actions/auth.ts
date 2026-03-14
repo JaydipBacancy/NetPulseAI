@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getFormValues } from "@/lib/form-values";
+import { getWorkspaceAccessForClient } from "@/lib/supabase/rbac";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   signInSchema,
@@ -20,9 +21,28 @@ const signUpFields = [
   "fullName",
   "password",
 ] as const;
+type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
 function createActionTimestamp() {
   return new Date().toISOString();
+}
+
+async function ensureWorkspaceAccess(
+  supabase: SupabaseServerClient,
+) {
+  const access = await getWorkspaceAccessForClient(supabase);
+
+  if (!access.profile) {
+    await supabase.auth.signOut();
+    return "Your workspace access is not configured yet. Contact an administrator.";
+  }
+
+  if (!access.profile.isActive) {
+    await supabase.auth.signOut();
+    return "Your workspace access is disabled. Contact an administrator.";
+  }
+
+  return null;
 }
 
 export async function submitSignInAction(
@@ -49,6 +69,18 @@ export async function submitSignInAction(
       return {
         fieldErrors: {},
         message: "Unable to sign in. Check your credentials and try again.",
+        status: "server_error",
+        submittedAt: createActionTimestamp(),
+        values,
+      };
+    }
+
+    const accessError = await ensureWorkspaceAccess(supabase);
+
+    if (accessError) {
+      return {
+        fieldErrors: {},
+        message: accessError,
         status: "server_error",
         submittedAt: createActionTimestamp(),
         values,
@@ -114,6 +146,18 @@ export async function submitSignUpAction(
     }
 
     if (data.session) {
+      const accessError = await ensureWorkspaceAccess(supabase);
+
+      if (accessError) {
+        return {
+          fieldErrors: {},
+          message: accessError,
+          status: "server_error",
+          submittedAt: createActionTimestamp(),
+          values,
+        };
+      }
+
       redirect("/dashboard");
     }
   } catch {
@@ -129,15 +173,20 @@ export async function submitSignUpAction(
   return {
     fieldErrors: {},
     message:
-      "Account created. If email confirmation is enabled in Supabase, confirm your email and then sign in.",
+      "Account created. If email confirmation is enabled in Supabase, confirm your email and then sign in. Admins can adjust operational access after signup.",
     status: "success",
     submittedAt: createActionTimestamp(),
     values: {},
   };
 }
 
-export async function signOutAction() {
+export async function signOutAction(formData?: FormData) {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect("/signin");
+  const redirectToValue = formData?.get("redirectTo");
+  const redirectTo =
+    typeof redirectToValue === "string" && redirectToValue.startsWith("/")
+      ? redirectToValue
+      : "/signin";
+  redirect(redirectTo);
 }

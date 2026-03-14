@@ -15,6 +15,7 @@ export const config = {
     "/tests/:path*",
     "/analysis/:path*",
     "/reports/:path*",
+    "/users/:path*",
     "/auth/confirm",
   ],
 };
